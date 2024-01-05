@@ -1,5 +1,5 @@
 require('dotenv').config()
-const { Seqelize, Model, DataTypes, Sequelize } = require('sequelize')
+const { Sequelize, Model, DataTypes } = require('sequelize')
 
 const sequelize = new Sequelize(process.env.DATABASE_URL);
 
@@ -31,6 +31,8 @@ Blog.init({
     timestamps: false,
     modelName: 'blog'
 });
+
+Blog.sync()
 
 const main = async () => {
     const blogs = await Blog.findAll()
