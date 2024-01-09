@@ -1,6 +1,6 @@
 const router = require('express').Router()
-
-const { Blog } = require('../models')
+const {tokenExtractor} = require('../util/middleware')
+const { Blog,User } = require('../models/index')
 
 const blogFinder = async (req, res, next) => {
     req.blog = await Blog.findByPk(req.params.id)
@@ -8,7 +8,13 @@ const blogFinder = async (req, res, next) => {
 }
 
 router.get('/', async (req, res) => {
-    const blogs = await Blog.findAll()
+    const blogs = await Blog.findAll({
+        attributes: {exclude: ['userId']},
+        include: {
+            model: User,
+            attributes: ['name']
+        }
+    })
     console.log(JSON.stringify(blogs))
     res.json(blogs)
 
@@ -23,27 +29,31 @@ router.get('/:id', blogFinder, async (req, res) => {
     }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', tokenExtractor, async (req, res) => {
     //can you build -> save as well
     //create already saves for you
 
     console.log('req.body: ', req.body)
     try{
-
-    const newBlog = await Blog.create(req.body)
-    console.log(JSON.stringify(newBlog))
-    return res.json(newBlog)
+        const user = await User.findByPk(req.decodedToken.id)
+        const newBlog = await Blog.create({...req.body, userId: user.id })
+        console.log(JSON.stringify(newBlog))
+        return res.json(newBlog)
     }catch(error){
         return res.status(400).json({ error })
     }
 })
 
-router.delete('/:id', blogFinder,  async (req, res) => {
+router.delete('/:id', blogFinder, tokenExtractor,  async (req, res) => {
     try{
         if(req.blog){
-            blogDelete.destroy()
-
+            if(req.blog.userId===req.decodedToken.id){
+            req.blog.destroy()
             res.send(204).send()
+            }else {
+                return res.status(401).json({ error: 'unauthorized user' })
+            }
+            
         } else{
             res.status(404).json({error:'blog not found'})
         }
