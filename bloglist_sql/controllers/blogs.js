@@ -3,21 +3,35 @@ const { Op } = require('sequelize')
 const {tokenExtractor} = require('../util/middleware')
 const { Blog,User } = require('../models/index')
 
+
 const blogFinder = async (req, res, next) => {
     req.blog = await Blog.findByPk(req.params.id)
     next()
 }
 
+
 router.get('/', async (req, res) => {
     const where = {}
 
     if(req.query.search){
-        where.title = {
-            [Op.substring]: req.query.search
-        }
+        where[Op.or] = [
+            {
+                author: {
+                    [Op.substring]: req.query.search
+                }
+            },
+            {
+                title: {
+                    [Op.substring]: req.query.search
+                }
+            }
+        ]
     }
 
     const blogs = await Blog.findAll({
+        order: [
+            ['likes', 'DESC']
+        ],
         attributes: {exclude: ['userId']},
         include: {
             model: User,
