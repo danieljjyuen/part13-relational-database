@@ -20,6 +20,10 @@ User.init({
         validate: {
             isEmail:true
         }
+    },
+    disable: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 }, {
     sequelize,

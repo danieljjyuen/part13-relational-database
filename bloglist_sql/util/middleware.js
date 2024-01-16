@@ -29,8 +29,21 @@ const tokenExtractor = (req, res, next) => {
     }
     next()
 }
+
+const tokenAuthExtractor = (req, res, next) => {
+    const authorization = req.get('authorization')
+    if(authorization && authorization.toLowerCase().startsWith('bearer ')) {
+        try {
+            req.tokenAuth = authorization.substring(7)
+        } catch {
+            next()
+        }
+    }
+    next()
+}
 module.exports = {
     errorHandler, 
     unknownEndpoint,
-    tokenExtractor
+    tokenExtractor,
+    tokenAuthExtractor
 }
